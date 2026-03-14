@@ -36,7 +36,7 @@ To develop the code and have it upload to EARL and to debug that code the follow
 
 ### Devlopment Computer
 
-A fairly modern computer with at least 8GB of RAM, 256MB of available hard drive space and USB-C or USB-A ports is needed. Both a Mac OS (Catalina or later) and Windows (10 or Later) can be used for development. 
+A fairly modern computer with at least 8GB of RAM, 256MB of available hard drive space and USB-C or USB-A ports is needed. Both a Mac OS (Catalina or later) and Windows (10 or Later) can be used for development.
 
 Arduino IDE is the only softwra needed for development.
 
