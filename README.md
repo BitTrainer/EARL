@@ -32,7 +32,7 @@ I made a simple mockup of the robot in tinkercad and programed it to rotate both
 
 ## Development Environment
 
-To develop the code and have it upload to EARL and to debug that code the following development environment was setup.
+To develop the code and have it upload to EARL and to debug that code the following development environment is needed.
 
 ### Devlopment Computer
 
