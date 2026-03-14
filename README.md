@@ -20,3 +20,11 @@ For this project the following hardware was selected:
 - Proximity sensor. The proximit sensor allows the robot to detect if any obstacles are in its way and the distance they are away from the robot.
   
 ___
+## Research 
+
+I made a simple mockup of the robot in tinkercad and programed it to rotate both wheels in the same direction. There were 2 motors that drove the wheels one was connected to pin 13 the other to pin 12 with some basic code to move them.
+
+![diagram of TimkerCad configuration](documentation/tinkercad.png)
+
+## Code 
+- the code for the test is bellow
