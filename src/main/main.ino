@@ -1,26 +1,34 @@
-#include "include/navigator.h"
-const int buttonPin = 9;  
-Navigator * navigator = nullptr;
-bool isStopped = true ; 
+#include "navigation_methods.h"
+
+enum VehicleState {
+  Stopped,
+  Driving,
+  AvoidingObstacle,
+  Stuck
+};
+
+const int BUTTON_PIN = 9;  
+VehicleState currentState = Stopped;
 
 void setup() {
   Serial.begin(9600);
-  pinMode(buttonPin, INPUT_PULLUP);
-  navigator = new Navigator();
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  prepareVehicle();  
 }
 
 void loop() {  
-  
-  if (digitalRead(buttonPin) == LOW) {
-    if (isStopped) {
+
+  if (digitalRead(BUTTON_PIN) == LOW) {
+    if (currentState == Stopped) {
       Serial.println("Driving forward...");      
-      navigator->driveForward();
+      driveForward();
+      currentState = Driving;
     } else {
       Serial.println("stopped");
-      navigator->stop();
+      stop();
+      currentState = Stopped;
     }    
     
-    delay(300);
-    isStopped = !isStopped;
+    delay(300);    
   }  
 }
