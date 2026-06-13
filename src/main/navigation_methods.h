@@ -21,6 +21,13 @@ void driveForward() {
   motorFrontLeft.run(FORWARD);
 }
 
+void reverse() {
+  motorBackRight.run(BACKWARD);
+  motorBackLeft.run(BACKWARD);
+  motorFrontRight.run(BACKWARD);
+  motorFrontLeft.run(BACKWARD);
+}
+
 void stop() {
   motorBackRight.run(RELEASE);
   motorBackLeft.run(RELEASE);
@@ -42,9 +49,14 @@ void turnRight() {
   delay(1000);
 }
 
-void turnAround() {
-    turnLeft();
-    delay(1000);   // EARL’s approximate 180° turn time
+void turnAround() {    
+    reverse();
+    delay(700);   
     stop();
+    turnLeft();
+    stop();
+    delay(700);   // EARL’s approximate 180° turn time
+    stop();
+    delay(100);   // Allow time to stop before next action
 }
 
