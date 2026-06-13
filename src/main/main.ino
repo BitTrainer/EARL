@@ -95,7 +95,7 @@ void actionCurrentState() {
       driveForward();
       break;    
     case AvoidingObstacle:    
-      currentState = determineState(waitForAssistance);
+      currentState = determineState(WaitForAssistance);
       break;
     case Stuck:
       stop();
