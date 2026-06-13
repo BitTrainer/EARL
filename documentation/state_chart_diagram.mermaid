@@ -1,0 +1,9 @@
+stateDiagram-v2
+   [*] --> WaitingForLoad  
+  WaitingForLoad -->HeadingToDestination: start  
+  HeadingToDestination --> AvoidingObstacle: avoidObstacle
+  AvoidingObstacle --> Stuck: waitForAssistance
+  Stuck --> HeadingToDestination: Continue
+  AvoidingObstacle --> HeadingToDestination: Continue
+  HeadingToDestination --> [*]: Arrived
+  
