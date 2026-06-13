@@ -1,3 +1,4 @@
+// navigation_methods.h
 #include <AFMotor.h>
 
 AF_DCMotor motorBackRight(1, MOTOR12_64KHZ);
@@ -41,4 +42,9 @@ void turnRight() {
   delay(1000);
 }
 
+void turnAround() {
+    turnLeft();
+    delay(1000);   // EARL’s approximate 180° turn time
+    stop();
+}
 
