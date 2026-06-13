@@ -1,9 +1,11 @@
 stateDiagram-v2
-   [*] --> WaitingForLoad  
-  WaitingForLoad -->HeadingToDestination: start  
+   [*] --> Waiting: switched on  
+  Waiting --> TurningAround: start  
+  TurningAround --> HeadingToDestination: turnComplete
   HeadingToDestination --> AvoidingObstacle: avoidObstacle
   AvoidingObstacle --> Stuck: waitForAssistance
   Stuck --> HeadingToDestination: Continue
   AvoidingObstacle --> HeadingToDestination: Continue
-  HeadingToDestination --> [*]: Arrived
+  HeadingToDestination --> Waiting: stop
+  
   
