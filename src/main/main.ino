@@ -24,10 +24,10 @@ unsigned long headingStartTime = 0;
 const unsigned long HEADING_TIMEOUT = 5000; // 5 seconds
 VehicleState currentState = Waiting; // After being switched on, EARL starts in the Waiting state, waiting for the button press to start heading to the destination.
 
-void setup() {
-    Serial.begin(9600);
-    pinMode(BUTTON_PIN, INPUT_PULLUP);
-    pinMode(LED_PIN, OUTPUT);
+void setup() {  
+  Serial.begin(9600);
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  pinMode(LED_PIN, OUTPUT);
   prepareVehicle();        
 }
 
