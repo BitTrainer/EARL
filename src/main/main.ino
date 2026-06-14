@@ -1,5 +1,6 @@
 // main.ino
 #include "navigation_methods.h"
+#include "light_methods.h"
 
 enum VehicleState {
   Waiting,
@@ -20,54 +21,49 @@ enum VehicleEvent {
 
 const int BUTTON_PIN = 9;  
 unsigned long headingStartTime = 0;
-const unsigned long HEADING_TIMEOUT = 10000; // 10 seconds
-VehicleState currentState = Waiting;
+const unsigned long HEADING_TIMEOUT = 5000; // 5 seconds
+VehicleState currentState = Waiting; // After being switched on, EARL starts in the Waiting state, waiting for the button press to start heading to the destination.
 
 void setup() {
     Serial.begin(9600);
     pinMode(BUTTON_PIN, INPUT_PULLUP);
+    pinMode(LED_PIN, OUTPUT);
   prepareVehicle();        
 }
 
 VehicleState determineState(VehicleEvent event) {
 
   switch(event) {
-
     case Start:
       if (currentState == Waiting) {
         Serial.print("Waiting over heading to destination."); 
         return HeadingToDestination;
       }
       break;
-
     case TurnAroundComplete:
       if (currentState == TurningAround) {
         Serial.print("Turn around complete. Heading to destination.");    
         return HeadingToDestination;
       }
       break;
-
     case Stop:
       if (currentState == HeadingToDestination) {
         Serial.print("Stopping. Returning to Waiting.");    
         return Waiting;
       }
       break;
-
     case Continue:
       if (currentState == Stuck || currentState == AvoidingObstacle) {
         Serial.print("Continuing. Heading to destination.");    
         return HeadingToDestination;
       }
       break;
-
     case AvoidObstacle:
       if (currentState == HeadingToDestination) {
         Serial.print("Avoiding obstacle.");    
         return AvoidingObstacle;
       }
       break;
-
     case WaitForAssistance:
       if (currentState == AvoidingObstacle) {
         Serial.print("Waiting for assistance.");    
@@ -82,12 +78,12 @@ VehicleState determineState(VehicleEvent event) {
 
 VehicleState handleButtonPress() {  
   if (currentState == Waiting) {
-      return determineState(Start);
+     return determineState(Start);
   } else if (currentState == Stuck) {
       return determineState(Continue);
   } else {
      return determineState(Stop);
-  }             
+  }               
 }
 
 VehicleState actionState(VehicleState state) {
@@ -123,11 +119,21 @@ VehicleState transitionToState(VehicleState newState) {
   return actionState(currentState);  
 }
 
+bool hasDriveTimedOut() {
+  return (millis() - headingStartTime) >= HEADING_TIMEOUT;
+}
+
 void loop() {  
-  VehicleState newState = currentState;  
-  if (digitalRead(BUTTON_PIN) == LOW) {   
-    Serial.println("Handling button press."); 
-    newState = handleButtonPress();    
+   VehicleState newState = currentState;  
+   
+   if (digitalRead(BUTTON_PIN) == LOW) {   
+    Serial.print("Handling button press.");
+    Serial.print("Current state: ");
+    Serial.println(currentState); 
+    newState = handleButtonPress(); 
+    Serial.print("Handled button press.");
+    Serial.print("New state: ");
+    Serial.println(newState);       
   }  
 
   while (newState != currentState){  
@@ -136,11 +142,18 @@ void loop() {
 
   if (currentState == HeadingToDestination) {
     // Timeout check
-    if (millis() - headingStartTime > HEADING_TIMEOUT) {
+    if (hasDriveTimedOut()) {
         Serial.println("Timeout reached. Returning to Waiting.");
         currentState = actionState(determineState(Stop));
+    } else {
+      Serial.println("Heading to destination.");
+      indicateHeadingToDestination(); // visual feedback that EARL is driving towards the destination.
     }
   }
-  
-  delay(200); // Small delay to avoid button bounce issues
+
+  if (currentState == Waiting) {    
+     indicateWaiting(); // Visual feedback that EARL is waiting for the button press to start heading to the destination. 
+  }
+
+  delay(300); // Debounce delay to prevent multiple triggers from a single press
 }
