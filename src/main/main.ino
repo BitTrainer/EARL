@@ -20,14 +20,15 @@ enum VehicleEvent {
  };
 
 const int BUTTON_PIN = 9;  
+const int DEBOUNCE_DELAY = 300; // milliseconds
 unsigned long headingStartTime = 0;
 const unsigned long HEADING_TIMEOUT = 5000; // 5 seconds
 VehicleState currentState = Waiting; // After being switched on, EARL starts in the Waiting state, waiting for the button press to start heading to the destination.
 
-void setup() {
-    Serial.begin(9600);
-    pinMode(BUTTON_PIN, INPUT_PULLUP);
-    pinMode(LED_PIN, OUTPUT);
+void setup() {  
+  Serial.begin(9600);
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  setupIndicators();
   prepareVehicle();        
 }
 
@@ -140,8 +141,7 @@ void loop() {
     newState = transitionToState(newState);
   } 
 
-  if (currentState == HeadingToDestination) {
-    // Timeout check
+  if (currentState == HeadingToDestination) {    
     if (hasDriveTimedOut()) {
         Serial.println("Timeout reached. Returning to Waiting.");
         currentState = actionState(determineState(Stop));
@@ -155,5 +155,5 @@ void loop() {
      indicateWaiting(); // Visual feedback that EARL is waiting for the button press to start heading to the destination. 
   }
 
-  delay(300); // Debounce delay to prevent multiple triggers from a single press
+  delay(DEBOUNCE_DELAY); // Debounce delay to prevent multiple triggers from a single press
 }
