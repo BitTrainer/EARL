@@ -1,5 +1,9 @@
 const int LED_PIN = 8;
 
+void setupIndicators() {
+  pinMode(LED_PIN, OUTPUT);
+}
+
 void indicateWaiting() {  
     digitalWrite(LED_PIN, HIGH); // Turn on LED to indicate waiting    
 }
