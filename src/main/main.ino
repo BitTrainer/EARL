@@ -1,6 +1,6 @@
 // main.ino
 #include "navigation_methods.h"
-#include "light_methods.h"
+#include "visual_indicator_methods.h"
 
 enum VehicleState {
   Waiting,
