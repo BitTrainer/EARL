@@ -26,6 +26,11 @@ I made a simple mockup of the robot in tinkercad and programed it to rotate both
 
 ![diagram of TimkerCad configuration](documentation/tinkercad.png)
 
+## Design
+EARL uses a state machine to determine its behaviour according to events.
+
+![diagram of TimkerCad configuration](documentation/state-chart-diagram.png)
+
 ## Code
 
 - the code for the test is bellow
