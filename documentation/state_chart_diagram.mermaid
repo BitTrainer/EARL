@@ -1,11 +1,6 @@
 stateDiagram-v2
    [*] --> Waiting: switched on  
-  Waiting --> TurningAround: start  
-  TurningAround --> HeadingToDestination: turnComplete
-  HeadingToDestination --> AvoidingObstacle: avoidObstacle
-  AvoidingObstacle --> Stuck: waitForAssistance
-  Stuck --> HeadingToDestination: Continue
-  AvoidingObstacle --> HeadingToDestination: Continue
-  HeadingToDestination --> Waiting: stop
-  
+  Waiting --> HeadingToDestination: buttonPress  
+  HeadingToDestination --> Waiting: buttonPress  
+  HeadingToDestination --> Waiting: drivingTimeout
   

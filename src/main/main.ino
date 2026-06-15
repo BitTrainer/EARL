@@ -1,6 +1,11 @@
-// main.ino
+/** 
+ * main.ino
+ * The main logic of EARL.
+ *  
+ **/ 
+
 #include "navigation_methods.h"
-#include "light_methods.h"
+#include "visual_indicator_methods.h"
 
 enum VehicleState {
   Waiting,
@@ -11,12 +16,8 @@ enum VehicleState {
 };
 
 enum VehicleEvent {  
-  Start,
-  TurnAroundComplete,
-  Stop,
-  Continue,
-  AvoidObstacle,
-  WaitForAssistance
+  buttonPress  ,
+  drivingTimeout
  };
 
 const int BUTTON_PIN = 9;  
@@ -30,130 +31,83 @@ void setup() {
   pinMode(BUTTON_PIN, INPUT_PULLUP);
   setupIndicators();
   prepareVehicle();        
+  indicateWaiting();   
 }
 
+// See which state EARL should be in.
 VehicleState determineState(VehicleEvent event) {
-
   switch(event) {
-    case Start:
+    case buttonPress:
       if (currentState == Waiting) {
-        Serial.print("Waiting over heading to destination."); 
         return HeadingToDestination;
-      }
-      break;
-    case TurnAroundComplete:
-      if (currentState == TurningAround) {
-        Serial.print("Turn around complete. Heading to destination.");    
-        return HeadingToDestination;
-      }
-      break;
-    case Stop:
-      if (currentState == HeadingToDestination) {
-        Serial.print("Stopping. Returning to Waiting.");    
+      } else {
         return Waiting;
       }
-      break;
-    case Continue:
-      if (currentState == Stuck || currentState == AvoidingObstacle) {
-        Serial.print("Continuing. Heading to destination.");    
-        return HeadingToDestination;
-      }
-      break;
-    case AvoidObstacle:
+    case drivingTimeout:
       if (currentState == HeadingToDestination) {
-        Serial.print("Avoiding obstacle.");    
-        return AvoidingObstacle;
+        return Waiting;
       }
-      break;
-    case WaitForAssistance:
-      if (currentState == AvoidingObstacle) {
-        Serial.print("Waiting for assistance.");    
-        return Stuck;
-      }
-      break;
+    default:
+      return currentState; // No state change for unhandled events
   }
-
-  // No valid transition → remain in current state
-  return currentState;
 }
 
-VehicleState handleButtonPress() {  
-  if (currentState == Waiting) {
-     return determineState(Start);
-  } else if (currentState == Stuck) {
-      return determineState(Continue);
-  } else {
-     return determineState(Stop);
-  }               
-}
-
-VehicleState actionState(VehicleState state) {
-  switch(state) {
-    case Waiting:
-      Serial.print("Starting to wait."); 
-      stop();
-      return state;
-    case TurningAround:
-      Serial.print("Turning around.");      
-      turnAround();
-       return actionState(determineState(TurnAroundComplete));
+// Any actions that need to be performed when transitioning between states can be handled here.
+VehicleState performStateTransitionAction(VehicleState fromState, VehicleState toState) { 
+  switch(toState) {
+    case Waiting:       
+      if (fromState != Waiting) {
+         Serial.println("Stopping.");
+         stop();
+      }      
+      indicateWaiting();
+      return toState;
     case HeadingToDestination:
-      Serial.print("Heading to destination.");
-      headingStartTime = millis();      
-      driveForward();
-      return state;
-    case AvoidingObstacle:    
-      Serial.print("Avoiding obstacle.");      
-      return actionState(determineState(WaitForAssistance));      
-    case Stuck:
-      stop();
-      return state;
-  }
+      if (fromState != HeadingToDestination) {
+         Serial.println("Starting to drive towards destination.");
+         headingStartTime = millis();
+         driveForward();
+      }       
+      indicateHeadingToDestination();
+      return toState;
+    }
 }
 
-VehicleState transitionToState(VehicleState newState) {
-  Serial.print("Transitioning from ");
-  Serial.print(currentState);
-  Serial.print(" to NEW STATE: ");
-  Serial.println(newState);  
-  currentState = newState; // Update state before actions to ensure correct behavior in actionState
-  return actionState(currentState);  
+// Change state 
+void transitionToState(VehicleState newState) {
+  if (newState != currentState) {
+    Serial.print("Transitioning from ");
+    Serial.print(currentState);
+    Serial.print(" to NEW STATE: ");
+    Serial.println(newState);  
+  }
+  
+  currentState = performStateTransitionAction(currentState, newState);  
 }
 
 bool hasDriveTimedOut() {
   return (millis() - headingStartTime) >= HEADING_TIMEOUT;
 }
 
+VehicleState handleButtonPress() {  
+  Serial.println("Handling button press. ");
+  return determineState(buttonPress);
+}
+
+// The main loop that runs until the unit is switched off.
 void loop() {  
    VehicleState newState = currentState;  
    
-   if (digitalRead(BUTTON_PIN) == LOW) {   
-    Serial.print("Handling button press.");
-    Serial.print("Current state: ");
-    Serial.println(currentState); 
-    newState = handleButtonPress(); 
-    Serial.print("Handled button press.");
-    Serial.print("New state: ");
-    Serial.println(newState);       
-  }  
-
-  while (newState != currentState){  
-    newState = transitionToState(newState);
-  } 
-
-  if (currentState == HeadingToDestination) {    
+  if (digitalRead(BUTTON_PIN) == LOW) {
+    Serial.println("Button press. ");
+    newState = handleButtonPress();
+  } else if (currentState == HeadingToDestination) {    
     if (hasDriveTimedOut()) {
         Serial.println("Timeout reached. Returning to Waiting.");
-        currentState = actionState(determineState(Stop));
-    } else {
-      Serial.println("Heading to destination.");
-      indicateHeadingToDestination(); // visual feedback that EARL is driving towards the destination.
-    }
+        newState = determineState(drivingTimeout);
+    } 
   }
 
-  if (currentState == Waiting) {    
-     indicateWaiting(); // Visual feedback that EARL is waiting for the button press to start heading to the destination. 
-  }
-
-  delay(DEBOUNCE_DELAY); // Debounce delay to prevent multiple triggers from a single press
+  transitionToState(newState);  
+  delay(DEBOUNCE_DELAY); // Debounce to stop over-triggering on button press
 }
