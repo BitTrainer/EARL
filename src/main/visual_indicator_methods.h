@@ -12,15 +12,15 @@ void setupIndicators() {
 
 // Turn on the LED to indicate that EARL is waiting.
 void indicateWaiting() {  
-    digitalWrite(LED_PIN, HIGH); // Turn on LED to indicate waiting    
+  for (int i = 0; i < 10; i++) {
+     digitalWrite(LED_PIN, LOW); 
+     delay(50); 
+     digitalWrite(LED_PIN, HIGH);      
+  } 
+    
 }
 
 // Flash the LED to indicate that EARL is heading towards the destination.
 void indicateHeadingToDestination() {  
-  for (int i = 0; i < 10; i++) {
-     digitalWrite(LED_PIN, LOW); 
-     delay(100); 
-     digitalWrite(LED_PIN, HIGH); 
-     delay(100); 
-  } 
+   digitalWrite(LED_PIN, HIGH);      
 }
