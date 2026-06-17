@@ -8,16 +8,22 @@ AF_DCMotor motorBackRight(1, MOTOR12_64KHZ);
 AF_DCMotor motorBackLeft(4, MOTOR12_64KHZ);
 AF_DCMotor motorFrontRight(2, MOTOR12_64KHZ);
 AF_DCMotor motorFrontLeft(3, MOTOR12_64KHZ);
-const int MAX_SPEED = 255;
+const int FAST_SPEED = 255;
+const int SLOW_SPEED = 100;
 
 void prepareVehicle() {
-    motorBackRight.setSpeed(MAX_SPEED);
-      motorBackLeft.setSpeed(MAX_SPEED);
-      motorFrontRight.setSpeed(MAX_SPEED);
-      motorFrontLeft.setSpeed(MAX_SPEED);      
+    motorBackRight.setSpeed(FAST_SPEED);
+      motorBackLeft.setSpeed(FAST_SPEED);
+      motorFrontRight.setSpeed(FAST_SPEED);
+      motorFrontLeft.setSpeed(FAST_SPEED);      
 }
 
-void driveForward() {
+void driveForward(int speed) {
+  motorBackRight.setSpeed(speed);
+  motorBackLeft.setSpeed(speed);
+  motorFrontRight.setSpeed(speed);
+  motorFrontLeft.setSpeed(speed);
+
   motorBackRight.run(FORWARD);
   motorBackLeft.run(FORWARD);
   motorFrontRight.run(FORWARD);
