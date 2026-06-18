@@ -9,7 +9,8 @@
 #include "ultrasonic.h"
 
 // Settings
-const long DISTANCE_WHEN_OBJECT_IS_OBSTACLE = 300; // When an object is 300mm or closer it will be considered an obstacle. 
+const long DISTANCE_TO_OBSTACLE_SLOW = 500; // When an object is 300mm or closer it will be considered an obstacle. 
+const long DISTANCE_WHEN_OBJECT_IS_OBSTACLE = 350; // When an object is 300mm or closer it will be considered an obstacle. 
 const int DEBOUNCE_DELAY = 450; // milliseconds
 const unsigned long HEADING_TIMEOUT = 5000; // 5 seconds
 const int BUTTON_PIN = 9;
@@ -18,16 +19,18 @@ const int BUTTON_PIN = 9;
 enum VehicleState {
   Waiting,
   TurningAround,
-  HeadingToDestination,    
+  HeadingToDestinationFast, 
+  HeadingToDestinationSlow,
   Stuck,
 };
 
 enum VehicleEvent {  
   buttonPress  ,
   drivingTimeout,
-  obstacleDetected,
+  distantObstacleDetected,
+  obstructionDetected,
+  clearPathDetected,
  };
-
 
 void setup() {  
   Serial.begin(9600);
@@ -47,18 +50,29 @@ VehicleState determineState(VehicleEvent event) {
   switch(event) {
     case buttonPress:
       if (currentState == Waiting || currentState == Stuck) {
-        return HeadingToDestination;
+        return HeadingToDestinationFast;
       } else {
         return Waiting;
       }
     case drivingTimeout:
-      if (currentState == HeadingToDestination) {
+      if (currentState == HeadingToDestinationFast || currentState == HeadingToDestinationSlow) {
         return Waiting;
       }
-    case obstacleDetected:
-      if (currentState == HeadingToDestination) {
+    case obstructionDetected:
+      if (currentState == HeadingToDestinationFast || currentState == HeadingToDestinationSlow) {
         return Stuck;
       }  
+    case distantObstacleDetected:
+      if (currentState == HeadingToDestinationFast) {
+        return HeadingToDestinationSlow;
+      } else {
+        return currentState; // No state change if not currently heading to destination
+      }  
+    case clearPathDetected:
+      if (currentState == HeadingToDestinationSlow) {
+        return HeadingToDestinationFast;
+      } 
+      return currentState; // No state change if not currently heading to destination slow  
     default:
       return currentState; // No state change for unhandled events
   }
@@ -74,14 +88,21 @@ VehicleState performStateTransitionAction(VehicleState fromState, VehicleState t
       }      
       indicateWaiting();
       return toState;
-    case HeadingToDestination:    
-      if (fromState != HeadingToDestination) {
+    case HeadingToDestinationFast:    
+      if (fromState != HeadingToDestinationFast) {
          Serial.println("Starting to drive towards destination.");
          headingStartTime = millis();
-         driveForward();
-      }       
+         driveForward(FAST_SPEED);
+      }             
       indicateHeadingToDestination();
       return toState;
+     case HeadingToDestinationSlow:    
+      if (fromState != HeadingToDestinationSlow) {
+         Serial.println("Slowing down due to obstacle in distance.");         
+         driveForward(SLOW_SPEED);
+      }             
+      indicateHeadingToDestination();
+      return toState;  
      case Stuck:
       if (fromState != Stuck) {
          Serial.println("Vehicle is stuck. Stopping.");
@@ -108,9 +129,16 @@ bool hasDriveTimedOut() {
   return (millis() - headingStartTime) >= HEADING_TIMEOUT;
 }
 
-bool isObstacleAhead(long distanceToObject) {
-  return distanceToObject > 0 
-       && distanceToObject <= DISTANCE_WHEN_OBJECT_IS_OBSTACLE;
+VehicleEvent obstacleDistanceState(long distanceToObject) {
+  if (distanceToObject > 0 
+       && distanceToObject <= DISTANCE_WHEN_OBJECT_IS_OBSTACLE) {
+    return obstructionDetected;
+  } else if (distanceToObject > DISTANCE_WHEN_OBJECT_IS_OBSTACLE
+              && distanceToObject <= DISTANCE_TO_OBSTACLE_SLOW) {
+    return distantObstacleDetected;
+  } else {
+    return clearPathDetected;
+  }
 }
 
 VehicleState handleButtonPress() {     
@@ -120,22 +148,22 @@ VehicleState handleButtonPress() {
 
 // The main loop that runs until the unit is switched off.
 void loop() {  
-   VehicleState newState = currentState;  
-   long distanceToObjectAhead = frontSensor.distanceMM();
+  VehicleState newState = currentState;  
 
-  if (isObstacleAhead(distanceToObjectAhead)) {
-    Serial.println("Obstacle detected!");
-    newState = determineState(obstacleDetected);
-  } else if (digitalRead(BUTTON_PIN) == LOW) {
+  long distanceToObjectAhead = frontSensor.distanceMM();
+  newState = determineState(obstacleDistanceState(distanceToObjectAhead));
+  transitionToState(newState);
+
+  if (digitalRead(BUTTON_PIN) == LOW) {
     Serial.println("Button press. ");
     newState = handleButtonPress();   
-  } else if (currentState == HeadingToDestination) {    
+  } else if (currentState == HeadingToDestinationFast || currentState == HeadingToDestinationSlow) {    
     if (hasDriveTimedOut()) {
         Serial.println("Timeout reached. Returning to Waiting.");
         newState = determineState(drivingTimeout);
     } 
   }
 
-  transitionToState(newState);   
+   transitionToState(newState);   
    delay(DEBOUNCE_DELAY); 
 }
