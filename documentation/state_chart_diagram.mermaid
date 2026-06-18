@@ -1,6 +1,11 @@
 stateDiagram-v2
    [*] --> Waiting: switched on  
-  Waiting --> HeadingToDestination: buttonPress  
-  HeadingToDestination --> Waiting: buttonPress  
-  HeadingToDestination --> Waiting: drivingTimeout
+  Waiting --> HeadingToDestinationFast: buttonPress  
+  HeadingToDestinationFast --> HeadingToDestinationFast: clearPathDetected
+  HeadingToDestinationFast --> HeadingToDestinationSlow: distantObjectDetected
+  HeadingToDestinationSlow --> HeadingToDestinationFast: clearPathDetected
+  HeadingToDestinationSlow --> Stuck: obstructionDetected
+  Stuck --> HeadingToDestinationFast: buttonPress
+  HeadingToDestinationFast --> Waiting: buttonPress  
+  HeadingToDestinationFast --> Waiting: drivingTimeout
   
